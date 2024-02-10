@@ -31,7 +31,7 @@ class FilmworkAdmin(admin.ModelAdmin):
     search_fields = ('title', 'description', 'id')
     list_display = ('title', 'type', 'creation_date', 'rating')
     fields = (
-        'title', 'type', 'description', 'creation_date', 'certificate',
+        'title', 'type', 'description', 'creation_date', 
         'file_path', 'rating'
     )
     empty_value_display = '-пусто-'

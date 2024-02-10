@@ -41,14 +41,15 @@ class Genre(TimeAndIDMixin, models.Model):
 
 class FilmworkGenre(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
-    filmwork = models.ForeignKey('Filmwork', on_delete=models.CASCADE, to_field='id', db_column='film_work_id')
-    genre = models.ForeignKey('Genre', on_delete=models.CASCADE, to_field='id', db_column='genre_id')
+    filmwork = models.ForeignKey('Filmwork', on_delete=models.CASCADE)
+    genre = models.ForeignKey('Genre', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         indexes = [
-            models.Index(fields=['filmwork_id', 'genre_id'], name='film_work_genre'),
+            models.Index(fields=['filmwork', 'genre'], name='film_work_genre_idx'),
         ]
+        unique_together = (('filmwork', 'genre'),)
         verbose_name = _('Жанр фильма')
         verbose_name_plural = _('Жанры фильмов')
         db_table = '"content"."genre_film_work"'
@@ -90,10 +91,11 @@ class PersonRole(models.Model):
     class Meta:
         verbose_name = _('Персона её роль')
         verbose_name_plural = _('Персоны и их роли')
-        db_table = '"content"."person_film_work"'
+        db_table = 'content.person_film_work'
         indexes = [
-            models.Index(fields=['filmwork_id', 'person_id', 'role'], name='film_work_person_role'),
+            models.Index(fields=['filmwork', 'person', 'role'], name='film_work_person_role'),
         ]
+        unique_together = (('filmwork', 'person', 'role'),)
         managed = False
 
     def __str__(self):
@@ -104,7 +106,6 @@ class Filmwork(TimeAndIDMixin, models.Model):
     title = models.CharField(_('Название'), max_length=255)
     description = models.TextField(_('Описание'), null=True, blank=True)
     creation_date = models.DateField(_('Дата выхода'), null=True, blank=True)
-    certificate = models.TextField(_('certificate'), null=True, blank=True)
     file_path = models.FileField(_('Путь к файлу'), upload_to='film_works/', blank=True)
     rating = models.FloatField(
         _('Рейтинг'),
@@ -113,6 +114,7 @@ class Filmwork(TimeAndIDMixin, models.Model):
     )
     type = models.CharField(_('Тип произведения'), max_length=20, choices=FilmworkType.choices)
     genres = models.ManyToManyField(Genre, through='FilmworkGenre')
+    persons = models.ManyToManyField(Person, through='PersonRole', related_name='filmworks')
 
     class Meta:
         verbose_name = _('Фильм')

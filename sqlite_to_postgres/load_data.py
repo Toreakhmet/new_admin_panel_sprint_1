@@ -9,7 +9,7 @@ from psycopg2.extensions import connection as _connection
 from psycopg2.extras import DictCursor
 
 from data_classes import Movie, Person, Genre, GenreFilmWork, PersonFilmWork
-
+from contextlib import closing
 load_dotenv()
 
 log = logging.getLogger(__name__)
@@ -35,25 +35,26 @@ class SQLiteLoader:
         self.data_class = data_class
         self.cursor.execute(f'SELECT * FROM {self.table_name}')
 
-    def load_table(self):
+    def load_table(self, BLOCK_SIZE=100):
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute(f'SELECT * FROM {self.table_name}')
+            counter = 0
+            while True:
+                block_rows = cursor.fetchmany(size=BLOCK_SIZE)
+                if not block_rows:
+                    break
+                block = [self.data_class(*row) for row in block_rows]
+                yield block
+                counter += 1
 
-        counter = 0
-        while True:
-            block_rows = self.cursor.fetchmany(size=BLOCK_SIZE)
-            if not block_rows:
-                break
-            block = []
-            for row in block_rows:
-                data = self.data_class(*row)
-                block.append(data)
-            yield block
-            counter += 1
-
-        if self.verbose:
-            log.info('Загружено: из %s %s блоков', self.table_name, counter)
-
-    def __del__(self):
-        self.cursor.close()
+            if self.verbose:
+                log.info('Загружено: из %s %s блоков', self.table_name, counter)
+        except Exception as e:
+            log.error("Произошла ошибка при загрузке данных: %s", e)
+            raise
+        finally:
+                cursor.close()
 
 
 class PostgresSaver(SQLiteLoader):
@@ -96,8 +97,10 @@ if __name__ == '__main__':
         'port': int(os.getenv('DB_PORT')),
         'options': '-c search_path=content'
     }
-    with sqlite3.connect('db.sqlite') as sqlite_conn, psycopg2.connect(**dsl, cursor_factory=DictCursor) as pg_conn:
-        load_from_sqlite(sqlite_conn, pg_conn)
-
-    sqlite_conn.close()
-    pg_conn.close()
+    with sqlite3.connect('db.sqlite') as sqlite_conn:
+        # Использование contextlib.closing для PostgreSQL
+        try:
+            with closing(psycopg2.connect(**dsl, cursor_factory=DictCursor)) as pg_conn:
+                load_from_sqlite(sqlite_conn, pg_conn)
+        except Exception as e:
+            print(f"Произошла ошибка: {e}")

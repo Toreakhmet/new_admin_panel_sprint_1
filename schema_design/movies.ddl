@@ -23,11 +23,16 @@ CREATE TABLE IF NOT EXISTS content.person (
 
 CREATE TABLE IF NOT EXISTS content.person_film_work (
     id uuid PRIMARY KEY,
-    person_id uuid NOT NULL REFERENCES person(id) ON DELETE CASCADE,
-    film_work_id uuid NOT NULL REFERENCES film_work(id) ON DELETE CASCADE,
+    person_id uuid NOT NULL,
+    film_work_id uuid NOT NULL,
     role VARCHAR(15),
-    created timestamp with time zone NOT NULL
+    created timestamp with time zone NOT NULL,
+    CONSTRAINT unique_person_film_work_role UNIQUE (film_work_id, person_id, role),
+    FOREIGN KEY (person_id) REFERENCES content.person(id) ON DELETE CASCADE,
+    FOREIGN KEY (film_work_id) REFERENCES content.film_work(id) ON DELETE CASCADE
 );
+ALTER TABLE content.person_film_work ADD CONSTRAINT unique_person_film_work_role UNIQUE (film_work_id, person_id, role);
+
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS person_film_work_person_id
   ON content.person_film_work(person_id);

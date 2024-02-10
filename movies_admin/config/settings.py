@@ -7,13 +7,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 include(
     'components/database.py',
 ) 
-SECRET_KEY = os.environ.get('secret','hz')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = 'True'
-ALLOWED_HOSTS = ['127.0.0.1'] 
-
-# Application definition
+SECRET_KEY = os.environ.get('SECRET_KEY','hz')
+allowed_hosts_env = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1')
+DEBUG = os.environ.get('DEBUG', False) == 'True'
+ALLOWED_HOSTS = allowed_hosts_env.split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -56,12 +53,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 LOCALE_PATHS = ['movies/locale'] 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -78,9 +71,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
 
 LANGUAGE_CODE = 'ru-RU'
 

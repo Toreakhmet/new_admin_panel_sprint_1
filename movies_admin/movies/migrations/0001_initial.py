@@ -13,6 +13,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunSQL(
+            sql="CREATE SCHEMA IF NOT EXISTS content",
+            reverse_sql=migrations.RunSQL.noop  # Для отката миграции используется операция, которая ничего не делает
+        ),
         migrations.CreateModel(
             name='Filmwork',
             fields=[
